@@ -28,9 +28,10 @@ def render_menu():
     query = "SELECT name, description, volume, image, price FROM products"
     cur = con.cursor()
     cur.execute(query)
-    product_list = cur.,fe
-
-    return render_template('menu.html')
+    product_list = cur.fetchall()
+    con.close()
+    print(product_list)
+    return render_template('menu.html', products=product_list)
 
 
 @app.route('/contact')
