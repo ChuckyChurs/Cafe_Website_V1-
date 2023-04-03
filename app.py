@@ -2,7 +2,7 @@ from flask import Flask, render_template
 import sqlite3
 
 
-DATABASE = "coffee.db"
+DATABASE = "coffee.db.db"
 
 app = Flask(__name__)
 
