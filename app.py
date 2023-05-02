@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, session
 import sqlite3
 from sqlite3 import Error
 from flask_bcrypt import Bcrypt
@@ -49,6 +49,38 @@ def render_contact():
 
 @app.route('/login', methods=['POST', 'GET'])
 def render_login():
+    print("logging in")
+    if request.method == "POST":
+        email = request.form['email'].strip().lower()
+        password = request.form['password'].strip()
+        print(email)
+        query = "SELECT id, fname, password FROM user WHERE email = ?"
+        con = open_database(DATABASE)
+        cur = con.cursor()
+        cur.execute(query, (email,))
+        user_data = cur.fetchone()
+        con.close()
+        print(user_data)
+
+
+        try:
+            user_id = user_data[0]
+            first_name = user_data[1]
+            db_password = user_data[2]
+        except IndexError:
+            return redirect("/login?error=Email+invalid+or+password+incorrect")
+
+        if not bcrypt.check_password_hash(db_password, password):
+            return redirect(request.referrer + "?error=Email+invalid+or+password+incorrect")
+
+        session['email'] = email
+        session['user_id'] = user_id
+        session['first_name'] = first_name
+        print(session)
+        return redirect('/')
+
+
+
     return render_template('login.html')
 
 @app.route('/signup', methods=['POST', 'GET'])
