@@ -19,11 +19,20 @@ def open_database(db_file):
         print(e)
     return None
 
+def is_logged_in():
+    if session.get('email') is None:
+        print("not logged in")
+        return False
+    else:
+        print("logged in")
+        return True
+
 
 
 @app.route('/')
 def render_home():
-    return render_template('home.html')
+    return render_template('home.html', logged_in=is_logged_in())
+
 
 
 @app.route('/menu/<cat_id>')
@@ -39,17 +48,18 @@ def render_menu(cat_id):
     category_list = cur.fetchall()
     con.close()
     print(product_list)
-    return render_template('menu.html', products=product_list, categories=category_list )
+    return render_template('menu.html', products=product_list, categories=category_list, logged_in=is_logged_in() )
 
 
 @app.route('/contact')
 def render_contact():
-    return render_template('contact.html')
+    return render_template('contact.html', logged_in=is_logged_in())
 
 
 @app.route('/login', methods=['POST', 'GET'])
 def render_login():
-    print("logging in")
+    if is_logged_in():
+        return redirect('/menu/1')
     if request.method == "POST":
         email = request.form['email'].strip().lower()
         password = request.form['password'].strip()
@@ -79,12 +89,22 @@ def render_login():
         print(session)
         return redirect('/')
 
+    return render_template('login.html', logged_in=is_logged_in())
 
 
-    return render_template('login.html')
+@app.route('/logout')
+def logout():
+    print(list(session.keys()))
+    [session.pop(key) for key in list(session.keys())]
+    print(list(session.keys()))
+    return redirect('/?message=SEE+YOU+NEXT+TIME!')
+
+    
 
 @app.route('/signup', methods=['POST', 'GET'])
 def render_signup():
+    if is_logged_in():
+        return redirect('/menu/1')
     if request.method == "POST":
         print(request.form)
         fname = request.form.get('fname').title().strip()
@@ -112,7 +132,29 @@ def render_signup():
         con.commit()
         con.close()
 
-    return render_template('signup.html')
+    return render_template('signup.html', logged_in=is_logged_in())
+
+@app.route('/admin')
+def render_admin():
+    if not is_logged_in():
+        return redirect('/message=Need+to+be+logged+in.')
+    return render_template("admin.html", logged_in=is_logged_in())
+
+@app.route('/add_category', methods=['POST'])
+def add_category():
+    if not is_logged_in():
+        return redirect('/?message=Need+to+be+logged+in.')
+    if request.method == "POST":
+        print(request.form)
+        cat_name = request.form.get('name').lower().strip()
+        print(cat_name)
+        con = open_database(DATABASE)
+        query = "INSERT INTO category ('name') VALUES (?)"
+        cur = con.cursor()
+        cur.execute(query, (cat_name))
+        con.commit()
+        con.close()
+        return redirect('/admin')
 
 
 app.run(host='0.0.0.0', debug=True)
