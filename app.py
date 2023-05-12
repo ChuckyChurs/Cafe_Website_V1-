@@ -38,15 +38,16 @@ def render_home():
 @app.route('/menu/<cat_id>')
 def render_menu(cat_id):
     con = open_database(DATABASE)
-    query = "SELECT name, description, volume, image, price FROM products WHERE cat_id=?"
-    cur = con.cursor()
-    cur.execute(query, (cat_id, ))
-    product_list = cur.fetchall()
-    query = "SELECT id, name FROM category"
+    query = "SELECT * FROM category"
     cur = con.cursor()
     cur.execute(query)
     category_list = cur.fetchall()
-    con.close()
+    print(category_list)
+
+    query = "SELECT * FROM products WHERE cat_id = ? ORDER BY name"
+    cur = cur.cursor()
+    cur.execute(query, (cat_id, ))
+    product_list = cur.fetchall
     print(product_list)
     return render_template('menu.html', products=product_list, categories=category_list, logged_in=is_logged_in() )
 
@@ -138,7 +139,13 @@ def render_signup():
 def render_admin():
     if not is_logged_in():
         return redirect('/message=Need+to+be+logged+in.')
-    return render_template("admin.html", logged_in=is_logged_in())
+    con = open_database(DATABASE)
+    query = "SELECT * FROM category"
+    cur = con.cursor()
+    cur.execute(query)
+    category_list = cur.fetchall()
+    con.close()
+    return render_template("admin.html", logged_in=is_logged_in(), categories=category_list)
 
 @app.route('/add_category', methods=['POST'])
 def add_category():
@@ -151,7 +158,7 @@ def add_category():
         con = open_database(DATABASE)
         query = "INSERT INTO category ('name') VALUES (?)"
         cur = con.cursor()
-        cur.execute(query, (cat_name))
+        cur.execute(query, (cat_name, ))
         con.commit()
         con.close()
         return redirect('/admin')
